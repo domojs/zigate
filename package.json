@@ -1,8 +1,8 @@
 {
   "name": "@domojs/zigate",
-  "version": "1.0.11",
+  "version": "1.0.12",
   "description": "",
-  "main": "dist/index.js",
+  "main": "dist/server/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "prepublishOnly": "tsc -p src"
