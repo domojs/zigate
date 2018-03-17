@@ -1,10 +1,10 @@
 {
   "name": "@domojs/zigate",
-  "version": "1.0.19",
+  "version": "1.0.20",
   "description": "",
   "main": "dist/server/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "echo \"Error: no test specified\" && exit 0",
     "prepublishOnly": "tsc -p src"
   },
   "peerDependencies": {

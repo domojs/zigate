@@ -5228,8 +5228,8 @@ yeast@0.1.2:
   resolved "https://registry.yarnpkg.com/yeast/-/yeast-0.1.2.tgz#008e06d8094320c372dbc2f8ed76a0ca6c8ac419"
 
 zigate@^1.0.0:
-  version "1.0.9"
-  resolved "https://registry.yarnpkg.com/zigate/-/zigate-1.0.9.tgz#1755441cbf6f9b5f7210e9b699f1ce4639f4a5f5"
+  version "1.0.10"
+  resolved "https://registry.yarnpkg.com/zigate/-/zigate-1.0.10.tgz#a987906d6a96aec168c285f717c128400e1e4e2a"
   dependencies:
     "@akala/core" "^1.0.48"
     "@domojs/protocol-parser" "^1.0.1"
