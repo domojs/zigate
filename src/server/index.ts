@@ -58,7 +58,7 @@ akala.injectWithName(['$worker'], (worker: EventEmitter) =>
                     case 'gateway':
                         switch (msg.command)
                         {
-                            case 'PermitJoin':
+                            case 'PermitJoining':
                                 return new Promise((resolve, reject) =>
                                 {
                                     devices[msg.device].gateway.send<MessageTypes.PermitJoiningRequest>(MessageType[msg.command], { interval: 0xFE, TCSignificance: TCSignificance.NoChangeInAuthentication, targetShortAddress: 0xFFFC });
@@ -72,12 +72,21 @@ akala.injectWithName(['$worker'], (worker: EventEmitter) =>
                                         resolve();
                                     });
                                 });
+                            case 'PermitJoin':
                             case 'GetVersion':
                             case 'Reset':
                             case 'ErasePersistentData':
                             case 'ZLO_ZLL_FactoryNew_Reset':
-                            case 'StartNetwork':
+                            case 'PermitJoin':
+                            case 'GetDevicesList':
+                            case 'SetSecurityStateAndKey':
                             case 'StartNetworkScan':
+                            case 'RemoveDevice':
+                            case 'EnablePermissionsControlJoin':
+                            case 'AuthenticateDevice':
+                            case 'Bind':
+                            case 'Unbind':
+                            case 'ManagementLeave':
                                 return new Promise((resolve, reject) =>
                                 {
                                     devices[msg.device].gateway.send<MessageTypes.GetVersionRequest>(MessageType[msg.command]);
@@ -288,93 +297,23 @@ akala.injectWithName(['$worker'], (worker: EventEmitter) =>
 
                     return gateway.then((zigate) =>
                     {
-                        msg.device.commands = [
-                            'GetVersion',
-                            'Reset',
-                            'ErasePersistentData',
-                            'ZLO_ZLL_FactoryNew_Reset',
-                            'PermitJoin',
-                            'GetDevicesList',
-                            'SetSecurityStateAndKey',
-                            'StartNetworkScan',
-                            'RemoveDevice',
-                            'EnablePermissionsControlJoin',
-                            'AuthenticateDevice',
-                            'OutOfBandCommissionningData',
-                            'UserDescriptorSet',
-                            'UserDescriptor',
-                            'ComplexDescriptor',
-                            'Bind',
-                            'Unbind',
-                            'NetworkAddress',
-                            'IEEEAddress',
-                            'NodeDescriptor',
-                            'SimpleDescriptor',
-                            'PowerDescriptor',
-                            'ActiveEndpoint',
-                            'MatchDescriptor',
-                            'ManagementLeave',
-                            'PermitJoining',
-                            'ManagementNetworkUpdate',
-                            'SystemServerDiscovery',
-                            'DeviceAnnounce',
-                            'ManagementLQI',
-                            'AddGroup',
-                            'ViewGroup',
-                            'GetGroupMembership',
-                            'RemoveGroup',
-                            'RemoveAllGroup',
-                            'AddGroupIfIdentify',
-                            'IdentifySend',
-                            'IdentifyQuery',
-                            'MoveToLevel',
-                            'MoveToLevelWithWithoutOnOff',
-                            'MoveStep',
-                            'MoveStopMove',
-                            'MoveStopWithOnOff',
-                            'OnOffWithNoEffect',
-                            'OnOffTimedSend',
-                            'OnOffWithEffectsSend',
-                            'ViewScene',
-                            'AddScene',
-                            'RemoveScene',
-                            'RemoveAllScene',
-                            'StoreScene',
-                            'RecallScene',
-                            'SceneMembership',
-                            'AddEnhancedScene',
-                            'ViewEnhancedHost_NodeScene',
-                            'CopyScene',
-                            'MoveToHue',
-                            'MoveHue',
-                            'StepHue',
-                            'MoveToSaturation',
-                            'MoveSaturation',
-                            'StepSaturation',
-                            'MoveToHueAndSaturation',
-                            'MoveToColor',
-                            'MoveColor',
-                            'StepColor',
-                            'EnhancedMoveToHue',
-                            'EnhancedMoveHue',
-                            'EnhancedStepHue',
-                            'EnhancedMoveToHueAndSaturation',
-                            'ColorLoopSet',
-                            'StopMoveStep',
-                            'MoveToColorTemperature',
-                            'MoveColorTemperature',
-                            'StepColorTemperature',
-                            'InitiateTouchlink',
-                            'TouchlinkFactoryResetTarget',
-                            'IdentifyTriggerEffect',
-                            'LockUnlockDoor',
-                            'ReadAttribute',
-                            'WriteAttribute',
-                            'ConfigureReporting',
-                            'AttributeDiscovery',
-                            'IASZoneEnrollResponse',
-                            'RawAPSData',
-                        ];
+                        msg.device.commands = {
+                            'GetVersion': { type: 'button' },
+                            'Reset': { type: 'button' },
+                            'ErasePersistentData': { type: 'button' },
+                            'ZLO_ZLL_FactoryNew_Reset': { type: 'button' },
+                            'PermitJoin': { type: 'button' },
+                            'GetDevicesList': { type: 'button' },
+                            'SetSecurityStateAndKey': { type: 'button' },
+                            'StartNetworkScan': { type: 'button' },
+                            'RemoveDevice': { type: 'button' },
+                            'EnablePermissionsControlJoin': { type: 'button' },
+                            'AuthenticateDevice': { type: 'button' },
+                            'Bind': { type: 'button' },
+                            'Unbind': { type: 'button' },
+                            'ManagementLeave': { type: 'button' },
+                            'PermitJoining': { type: 'button' },
+                        };
 
                         zigate.send<MessageTypes.SetChannelMaskRequest>(MessageType.SetChannelMask, { mask: 11 })
                         zigate.once(MessageType.Status, (response: MessageTypes.SetChannelMaskResponse) =>
