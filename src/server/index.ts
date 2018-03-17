@@ -6,13 +6,16 @@ import { Status } from 'zigate/dist/messages/status';
 import { Cluster } from 'zigate/dist/messages/common';
 import { AttributeType } from 'zigate/dist/messages/attributes';
 import { EventEmitter } from '@domojs/zigate/node_modules/@types/events';
+import './pendingDevices';
+import { TCSignificance } from '@domojs/zigate/node_modules/zigate/dist/messages/permitjoin';
 
 const log = akala.log('domojs:zigate');
 var gateway: PromiseLike<Zigate>;
 var devices: { [name: string]: ZDevices } = {};
 var devicesByAddress: { [address: number]: ZDevice } = {};
 
-akala.register('$devices', devices);
+akala.register('devices', devices);
+akala.register('devicesByAddress', devicesByAddress);
 
 type ZDevices = ZGateway | ZDevice;
 
@@ -45,7 +48,6 @@ akala.injectWithName(['$worker'], (worker: EventEmitter) =>
         log('ready');
     });
 
-
     akala.worker.createClient('devices').then((client) =>
     {
         var c = deviceType.createClient(client)({
@@ -56,11 +58,24 @@ akala.injectWithName(['$worker'], (worker: EventEmitter) =>
                     case 'gateway':
                         switch (msg.command)
                         {
+                            case 'PermitJoin':
+                                return new Promise((resolve, reject) =>
+                                {
+                                    devices[msg.device].gateway.send<MessageTypes.PermitJoiningRequest>(MessageType[msg.command], { interval: 0xFE, TCSignificance: TCSignificance.NoChangeInAuthentication, targetShortAddress: 0xFFFC });
+                                    devices[msg.device].gateway.once<MessageTypes.PermitJoiningResponse>(MessageType.Status, (message) =>
+                                    {
+                                        if (message.status != Status.Success)
+                                            reject(message.message);
+                                    });
+                                    devices[msg.device].gateway.once<MessageTypes.GetVersionResponse>(MessageType.GetVersion | MessageType.Response, (message) =>
+                                    {
+                                        resolve();
+                                    });
+                                });
                             case 'GetVersion':
                             case 'Reset':
                             case 'ErasePersistentData':
                             case 'ZLO_ZLL_FactoryNew_Reset':
-                            case 'PermitJoin':
                             case 'StartNetwork':
                             case 'StartNetworkScan':
                                 return new Promise((resolve, reject) =>
@@ -248,17 +263,26 @@ akala.injectWithName(['$worker'], (worker: EventEmitter) =>
             },
             getStatus: function (msg)
             {
-
+                var device = devices[msg.device];
+                switch (device.type)
+                {
+                    case 'device':
+                        return device.attributes;
+                    case 'gateway':
+                    default:
+                        return null;
+                }
             },
             save: function (msg)
             {
+                log(msg);
                 if (Object.keys(devices).length == 0 && !msg.body.IP && !msg.body.port)
                     throw new Error('A gateway first need to be registered');
 
                 if (msg.body.IP || msg.body.port) //gateway
                 {
                     if (!msg.body.IP)
-                        gateway = Zigate.getSerial(msg.body.port);
+                        gateway = Zigate.getSerial(msg.body.port.comName);
                     else
                         throw new Error('Wifi zigate are not (yet) supported');
 
@@ -458,11 +482,14 @@ akala.injectWithName(['$worker'], (worker: EventEmitter) =>
         });
         var server = c.$proxy();
         if (ready)
+        {
+            log('registering');
             server.register({
                 name: 'zigate',
                 commandMode: 'static',
-                view: '@domojs/zigate/new.html'
+                view: '@domojs/zigate/device.html'
             });
+        }
         else
             worker.on('ready', function ()
             {
@@ -470,8 +497,8 @@ akala.injectWithName(['$worker'], (worker: EventEmitter) =>
                 server.register({
                     name: 'zigate',
                     commandMode: 'static',
-                    view: '@domojs/zigate/new.html'
+                    view: '@domojs/zigate/device.html'
                 });
             })
     })
-})
+})();
