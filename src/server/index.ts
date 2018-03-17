@@ -5,9 +5,9 @@ import * as akala from '@akala/server';
 import { Status } from 'zigate/dist/messages/status';
 import { Cluster } from 'zigate/dist/messages/common';
 import { AttributeType } from 'zigate/dist/messages/attributes';
-import { EventEmitter } from '@domojs/zigate/node_modules/@types/events';
+import { EventEmitter } from 'events';
 import './pendingDevices';
-import { TCSignificance } from '@domojs/zigate/node_modules/zigate/dist/messages/permitjoin';
+import { TCSignificance } from 'zigate/dist/messages/permitjoin';
 
 const log = akala.log('domojs:zigate');
 var gateway: PromiseLike<Zigate>;
