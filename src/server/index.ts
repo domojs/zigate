@@ -61,15 +61,13 @@ akala.injectWithName(['$worker'], (worker: EventEmitter) =>
                             case 'PermitJoining':
                                 return new Promise((resolve, reject) =>
                                 {
-                                    devices[msg.device].gateway.send<MessageTypes.PermitJoiningRequest>(MessageType[msg.command], { interval: 0xFE, TCSignificance: TCSignificance.NoChangeInAuthentication, targetShortAddress: 0xFFFC });
+                                    devices[msg.device].gateway.send<MessageTypes.PermitJoiningRequest>(MessageType.PermitJoining, { interval: 0xFE, TCSignificance: TCSignificance.NoChangeInAuthentication, targetShortAddress: 0xFFFC });
                                     devices[msg.device].gateway.once<MessageTypes.PermitJoiningResponse>(MessageType.Status, (message) =>
                                     {
                                         if (message.status != Status.Success)
                                             reject(message.message);
-                                    });
-                                    devices[msg.device].gateway.once<MessageTypes.GetVersionResponse>(MessageType.GetVersion | MessageType.Response, (message) =>
-                                    {
-                                        resolve();
+                                        else
+                                            resolve(message);
                                     });
                                 });
                             case 'PermitJoin':
@@ -89,7 +87,7 @@ akala.injectWithName(['$worker'], (worker: EventEmitter) =>
                             case 'ManagementLeave':
                                 return new Promise((resolve, reject) =>
                                 {
-                                    devices[msg.device].gateway.send<MessageTypes.GetVersionRequest>(MessageType[msg.command]);
+                                    devices[msg.device].gateway.send<MessageTypes.GetVersionRequest>(MessageType[msg.command as keyof MessageType]);
                                     devices[msg.device].gateway.once<MessageTypes.Status>(MessageType.Status, (message) =>
                                     {
                                         if (message.status != Status.Success)
