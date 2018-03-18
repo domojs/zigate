@@ -1,6 +1,6 @@
 {
   "name": "@domojs/zigate",
-  "version": "1.0.23",
+  "version": "1.0.24",
   "description": "",
   "main": "dist/server/index.js",
   "scripts": {
@@ -13,7 +13,7 @@
   "author": "npenin",
   "license": "MIT",
   "dependencies": {
-    "@akala/server": "^1.0.85",
+    "@akala/server": "^1.0.87",
     "serialport": "^6.0.5",
     "zigate": "^1.0.0"
   },

@@ -51,8 +51,9 @@ akala.injectWithName(['$worker'], (worker: EventEmitter) =>
     akala.worker.createClient('devices').then((client) =>
     {
         var c = deviceType.createClient(client)({
-            exec: function (msg)
+            exec: function (msg: { device: string, command: string, value?: any })
             {
+                log(msg);
                 switch (devices[msg.device].type)
                 {
                     case 'gateway':
@@ -67,7 +68,7 @@ akala.injectWithName(['$worker'], (worker: EventEmitter) =>
                                         if (message.status != Status.Success)
                                             reject(message.message);
                                         else
-                                            resolve(message);
+                                            resolve();
                                     });
                                 });
                             case 'PermitJoin':
@@ -282,7 +283,6 @@ akala.injectWithName(['$worker'], (worker: EventEmitter) =>
             },
             save: function (msg)
             {
-                log(msg);
                 if (Object.keys(devices).length == 0 && !msg.body.IP && !msg.body.port)
                     throw new Error('A gateway first need to be registered');
 
