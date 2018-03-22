@@ -383,7 +383,7 @@ akala.injectWithName(['$worker'], (worker: EventEmitter) =>
                                     devicesByAddress[attribute.sourceAddress].attributes[attribute.clusterId] = attribute.value.readUInt8(0);
                                     break;
                                 default:
-                                    throw new Error(`Unsupported attribute type (${attribute.dataType})`);
+                                    log(`Unsupported attribute type (${attribute.dataType})`);
                             }
                         })
 
