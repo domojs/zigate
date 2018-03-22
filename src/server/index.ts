@@ -343,6 +343,16 @@ akala.injectWithName(['$worker'], (worker: EventEmitter) =>
                             {
                                 devicesByAddress[attribute.sourceAddress].internalName = attribute.value.toString() + ' (' + attribute.sourceAddress + ')';
                             }
+                            if (attribute.sourceAddress in devicesByAddress)
+                                devicesByAddress[attribute.sourceAddress] = {
+                                    type: 'device',
+                                    gateway: zigate,
+                                    address: attribute.sourceAddress,
+                                    category: null,
+                                    clusters: [],
+                                    attributes: {}
+                                }
+                            
                             if (devicesByAddress[attribute.sourceAddress].clusters.indexOf(attribute.clusterId) == -1)
                                 devicesByAddress[attribute.sourceAddress].clusters.push(attribute.clusterId);
                             switch (attribute.dataType)
