@@ -352,49 +352,56 @@ akala.injectWithName(['$worker'], (worker: EventEmitter) =>
                                     clusters: [],
                                     attributes: {}
                                 }
-                            
+
                             if (devicesByAddress[attribute.sourceAddress].clusters.indexOf(attribute.clusterId) == -1)
                                 devicesByAddress[attribute.sourceAddress].clusters.push(attribute.clusterId);
-                            switch (attribute.dataType)
+                            try
                             {
-                                case AttributeType.bitmap:
-                                    break;
-                                case AttributeType.bool:
-                                    devicesByAddress[attribute.sourceAddress].attributes[attribute.clusterId] = attribute.value.readUInt8(0);
-                                    break;
-                                case AttributeType.enum:
-                                    devicesByAddress[attribute.sourceAddress].attributes[attribute.clusterId] = attribute.value.readUInt8(0);
-                                    break;
-                                case AttributeType.int16:
-                                    devicesByAddress[attribute.sourceAddress].attributes[attribute.clusterId] = attribute.value.readInt16BE(0);
-                                    break;
-                                case AttributeType.int32:
-                                    devicesByAddress[attribute.sourceAddress].attributes[attribute.clusterId] = attribute.value.readInt32BE(0);
-                                    break;
-                                case AttributeType.int8:
-                                    devicesByAddress[attribute.sourceAddress].attributes[attribute.clusterId] = attribute.value.readInt8(0);
-                                    break;
-                                case AttributeType.null:
-                                    devicesByAddress[attribute.sourceAddress].attributes[attribute.clusterId] = null;
-                                    break;
-                                case AttributeType.string:
-                                    devicesByAddress[attribute.sourceAddress].attributes[attribute.clusterId] = attribute.value.toString();
-                                    break;
-                                case AttributeType.uint16:
-                                    devicesByAddress[attribute.sourceAddress].attributes[attribute.clusterId] = attribute.value.readUInt16BE(0);
-                                    break;
-                                case AttributeType.uint32:
-                                    devicesByAddress[attribute.sourceAddress].attributes[attribute.clusterId] = attribute.value.readUInt32BE(0);
-                                    break;
-                                case AttributeType.uint48:
-                                    devicesByAddress[attribute.sourceAddress].attributes[attribute.clusterId] = attribute.value.readUIntBE(0, 6);
-                                    break;
-                                case AttributeType.uint8:
-                                    devicesByAddress[attribute.sourceAddress].attributes[attribute.clusterId] = attribute.value.readUInt8(0);
-                                    break;
-                                default:
-                                    log(`Unsupported attribute type (${attribute.dataType})`);
+                                switch (attribute.dataType)
+                                {
+                                    case AttributeType.bitmap:
+                                        break;
+                                    case AttributeType.bool:
+                                        devicesByAddress[attribute.sourceAddress].attributes[attribute.clusterId] = attribute.value.readUInt8(0);
+                                        break;
+                                    case AttributeType.enum:
+                                        devicesByAddress[attribute.sourceAddress].attributes[attribute.clusterId] = attribute.value.readUInt8(0);
+                                        break;
+                                    case AttributeType.int16:
+                                        devicesByAddress[attribute.sourceAddress].attributes[attribute.clusterId] = attribute.value.readInt16BE(0);
+                                        break;
+                                    case AttributeType.int32:
+                                        devicesByAddress[attribute.sourceAddress].attributes[attribute.clusterId] = attribute.value.readInt32BE(0);
+                                        break;
+                                    case AttributeType.int8:
+                                        devicesByAddress[attribute.sourceAddress].attributes[attribute.clusterId] = attribute.value.readInt8(0);
+                                        break;
+                                    case AttributeType.null:
+                                        devicesByAddress[attribute.sourceAddress].attributes[attribute.clusterId] = null;
+                                        break;
+                                    case AttributeType.string:
+                                        devicesByAddress[attribute.sourceAddress].attributes[attribute.clusterId] = attribute.value.toString();
+                                        break;
+                                    case AttributeType.uint16:
+                                        devicesByAddress[attribute.sourceAddress].attributes[attribute.clusterId] = attribute.value.readUInt16BE(0);
+                                        break;
+                                    case AttributeType.uint32:
+                                        devicesByAddress[attribute.sourceAddress].attributes[attribute.clusterId] = attribute.value.readUInt32BE(0);
+                                        break;
+                                    case AttributeType.uint48:
+                                        devicesByAddress[attribute.sourceAddress].attributes[attribute.clusterId] = attribute.value.readUIntBE(0, 6);
+                                        break;
+                                    case AttributeType.uint8:
+                                        devicesByAddress[attribute.sourceAddress].attributes[attribute.clusterId] = attribute.value.readUInt8(0);
+                                        break;
+                                    default:
+                                        log(`Unsupported attribute type (${attribute.dataType})`);
+                                }
                             }
+                            catch (e)
+                                {
+                                    log(e);
+                                }
                         })
 
                         devices[msg.device.name] = {
