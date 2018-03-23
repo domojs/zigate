@@ -343,7 +343,7 @@ akala.injectWithName(['$worker'], (worker: EventEmitter) =>
                             {
                                 devicesByAddress[attribute.sourceAddress].internalName = attribute.value.toString() + ' (' + attribute.sourceAddress + ')';
                             }
-                            if (attribute.sourceAddress in devicesByAddress)
+                            if (!(attribute.sourceAddress in devicesByAddress))
                                 devicesByAddress[attribute.sourceAddress] = {
                                     type: 'device',
                                     gateway: zigate,
@@ -399,9 +399,9 @@ akala.injectWithName(['$worker'], (worker: EventEmitter) =>
                                 }
                             }
                             catch (e)
-                                {
-                                    log(e);
-                                }
+                            {
+                                log(e);
+                            }
                         })
 
                         devices[msg.device.name] = {
