@@ -326,17 +326,7 @@ akala.injectWithName(['$worker'], (worker: EventEmitter) =>
                                 })
                             })
                         });
-                        zigate.on<MessageTypes.DeviceAnnounce>(MessageType.DeviceAnnounce, (message) =>
-                        {
-                            devicesByAddress[message.shortAddress] = {
-                                type: 'device',
-                                gateway: zigate,
-                                address: message.shortAddress,
-                                category: null,
-                                clusters: [],
-                                attributes: {}
-                            };
-                        });
+
                         zigate.on<MessageTypes.ReportIndividualAttribute>(MessageType.ReportIndividualAttribute, (attribute) =>
                         {
                             if (attribute.attributeEnum == 0x05)
@@ -368,7 +358,17 @@ akala.injectWithName(['$worker'], (worker: EventEmitter) =>
                                         devicesByAddress[attribute.sourceAddress].attributes[attribute.clusterId] = attribute.value.readUInt8(0);
                                         break;
                                     case AttributeType.int16:
-                                        devicesByAddress[attribute.sourceAddress].attributes[attribute.clusterId] = attribute.value.readInt16BE(0);
+                                        switch (attribute.clusterId)
+                                        {
+                                            case Cluster.Temperature:
+                                            case Cluster.Pressure:
+                                            case Cluster.Humidity:
+                                                devicesByAddress[attribute.sourceAddress].attributes[attribute.clusterId] = attribute.value.readInt16BE(0) / 100;
+                                                break;
+                                            default:
+                                                devicesByAddress[attribute.sourceAddress].attributes[attribute.clusterId] = attribute.value.readInt16BE(0);
+                                                break;
+                                        }
                                         break;
                                     case AttributeType.int32:
                                         devicesByAddress[attribute.sourceAddress].attributes[attribute.clusterId] = attribute.value.readInt32BE(0);
