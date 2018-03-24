@@ -17,15 +17,15 @@ var devicesByAddress: { [address: number]: ZDevice } = {};
 akala.register('devices', devices);
 akala.register('devicesByAddress', devicesByAddress);
 
-type ZDevices = ZGateway | ZDevice;
+export type ZDevices = ZGateway | ZDevice;
 
-interface ZGateway
+export interface ZGateway
 {
     type: 'gateway';
     gateway: Zigate;
 }
 
-interface ZDevice
+export interface ZDevice
 {
     type: 'device';
     address: number;
