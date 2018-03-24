@@ -457,6 +457,6 @@ akala.injectWithName(['$worker'], (worker: EventEmitter) =>
                     commandMode: 'static',
                     view: '@domojs/zigate/device.html'
                 });
-            })
+            });
     })
 })();
