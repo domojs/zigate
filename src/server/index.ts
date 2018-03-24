@@ -34,6 +34,7 @@ export interface ZDevice
     name?: string;
     internalName?: string;
     clusters: Cluster[];
+    registered?: boolean;
     attributes: { [key: number]: string | number }
 }
 
@@ -393,6 +394,8 @@ akala.injectWithName(['$worker'], (worker: EventEmitter) =>
                                     case Cluster.Pressure:
                                     case Cluster.Humidity:
                                         devicesByAddress[attribute.sourceAddress].attributes[attribute.clusterId] = (devicesByAddress[attribute.sourceAddress].attributes[attribute.clusterId] as number) / 100;
+                                        if (devicesByAddress[attribute.sourceAddress].registered)
+                                            c.$proxy().pushStatus({ device: devicesByAddress[attribute.sourceAddress].name + '.' + Cluster[attribute.clusterId], state: devicesByAddress[attribute.sourceAddress].attributes[attribute.clusterId] });
                                         break;
                                 }
                                 log(devicesByAddress[attribute.sourceAddress].attributes);
@@ -414,7 +417,9 @@ akala.injectWithName(['$worker'], (worker: EventEmitter) =>
                 else //ZDevice
                 {
                     msg.device.subdevices = [];
-                    for (var cluster in devicesByAddress[msg.body.address].attributes)
+                    devicesByAddress[msg.body.zdevice.address].name = msg.device.name;
+                    devices[msg.device.name] = devicesByAddress[msg.body.zdevice.address];
+                    for (var cluster in devicesByAddress[msg.body.zdevice.address].attributes)
                     {
                         msg.device.subdevices.push({
                             name: Cluster[cluster],
@@ -423,7 +428,7 @@ akala.injectWithName(['$worker'], (worker: EventEmitter) =>
                             type: msg.device.type,
                             status: function ()
                             {
-                                return Promise.resolve(devicesByAddress[msg.body.address].attributes[cluster].toString());
+                                return Promise.resolve(devicesByAddress[msg.body.zdevice.address].attributes[cluster].toString());
                             },
                             statusMethod: 'push'
                         })

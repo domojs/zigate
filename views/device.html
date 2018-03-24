@@ -24,9 +24,11 @@
     
     
         <div class="form-group" data-bind="{show:device.ztype=='device'}">
-            <label for="device" class="control-label col-sm-2">Device</label>
+            <label for="address" class="control-label col-sm-2">Device</label>
             <div class="col-sm-10">
-                <select class="form-control" id="device" name="device" data-bind="{options:{in:'/api/@domojs/zigate/pending' # http, text:name, value:address}, value:device.zaddress}"></select>
+                <select class="form-control" id="zaddress" name="zaddress" data-bind="{value:device.zaddress, options:{in:'/api/@domojs/zigate/pending' # http, text:name, value:address}}">
+                    <option value=""></option>                
+                </select>
             </div>
         </div>
     
