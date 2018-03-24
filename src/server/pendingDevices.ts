@@ -10,7 +10,7 @@ akala.injectWithName(['$router'], function (router: akala.worker.Router)
         return akala.map(devices, function (device)
         {
             return {
-                name: device.internalName || device.address + ' ('+(device.clusters.map(function (cluster)
+                name: (device.internalName || device.address) + ' ('+(device.clusters.map(function (cluster)
                 {
                     return Cluster[cluster];
                 }).toString())+')', address: device.address
