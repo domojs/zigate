@@ -329,9 +329,9 @@ akala.injectWithName(['$worker'], (worker: EventEmitter) =>
 
                         zigate.on<MessageTypes.ReportIndividualAttribute>(MessageType.ReportIndividualAttribute, (attribute) =>
                         {
-                            if (attribute.attributeEnum == 0x05)
+                            if (attribute.attributeEnum == 0x01)
                             {
-                                devicesByAddress[attribute.sourceAddress].internalName = attribute.value.toString() + ' (' + attribute.sourceAddress + ')';
+                                devicesByAddress[attribute.sourceAddress].internalName = attribute.value.toString();
                             }
                             if (!(attribute.sourceAddress in devicesByAddress))
                                 devicesByAddress[attribute.sourceAddress] = {
