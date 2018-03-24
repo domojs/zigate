@@ -358,17 +358,7 @@ akala.injectWithName(['$worker'], (worker: EventEmitter) =>
                                         devicesByAddress[attribute.sourceAddress].attributes[attribute.clusterId] = attribute.value.readUInt8(0);
                                         break;
                                     case AttributeType.int16:
-                                        switch (attribute.clusterId)
-                                        {
-                                            case Cluster.Temperature:
-                                            case Cluster.Pressure:
-                                            case Cluster.Humidity:
-                                                devicesByAddress[attribute.sourceAddress].attributes[attribute.clusterId] = attribute.value.readInt16BE(0) / 100;
-                                                break;
-                                            default:
-                                                devicesByAddress[attribute.sourceAddress].attributes[attribute.clusterId] = attribute.value.readInt16BE(0);
-                                                break;
-                                        }
+                                        devicesByAddress[attribute.sourceAddress].attributes[attribute.clusterId] = attribute.value.readInt16BE(0);
                                         break;
                                     case AttributeType.int32:
                                         devicesByAddress[attribute.sourceAddress].attributes[attribute.clusterId] = attribute.value.readInt32BE(0);
@@ -395,8 +385,17 @@ akala.injectWithName(['$worker'], (worker: EventEmitter) =>
                                         devicesByAddress[attribute.sourceAddress].attributes[attribute.clusterId] = attribute.value.readUInt8(0);
                                         break;
                                     default:
-                                        log(`Unsupported attribute type (${attribute.dataType})`);
+                                        throw new Error(`Unsupported attribute type (${attribute.dataType})`);
                                 }
+                                switch (attribute.clusterId)
+                                {
+                                    case Cluster.Temperature:
+                                    case Cluster.Pressure:
+                                    case Cluster.Humidity:
+                                        devicesByAddress[attribute.sourceAddress].attributes[attribute.clusterId] = (devicesByAddress[attribute.sourceAddress].attributes[attribute.clusterId] as number) / 100;
+                                        break;
+                                }
+                                log(devicesByAddress[attribute.sourceAddress].attributes);
                             }
                             catch (e)
                             {
