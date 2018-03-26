@@ -348,6 +348,11 @@ akala.injectWithName(['$worker'], (worker: EventEmitter) =>
                                 devicesByAddress[attribute.sourceAddress].clusters.push(attribute.clusterId);
                             try
                             {
+                                if (attribute.clusterId == 0 && attribute.attributeEnum != 0)
+                                {
+                                    attribute.clusterId = attribute.attributeEnum;
+                                }
+
                                 switch (attribute.dataType)
                                 {
                                     case AttributeType.bitmap:
@@ -390,14 +395,16 @@ akala.injectWithName(['$worker'], (worker: EventEmitter) =>
                                 }
                                 switch (attribute.clusterId)
                                 {
-                                    case Cluster.Temperature:
                                     case Cluster.Pressure:
+                                        devicesByAddress[attribute.sourceAddress].attributes[attribute.clusterId] = (devicesByAddress[attribute.sourceAddress].attributes[attribute.clusterId] as number) / 10000;
+                                        break;
+                                    case Cluster.Temperature:
                                     case Cluster.Humidity:
                                         devicesByAddress[attribute.sourceAddress].attributes[attribute.clusterId] = (devicesByAddress[attribute.sourceAddress].attributes[attribute.clusterId] as number) / 100;
-                                        if (devicesByAddress[attribute.sourceAddress].registered)
-                                            c.$proxy().pushStatus({ device: devicesByAddress[attribute.sourceAddress].name + '.' + Cluster[attribute.clusterId], state: devicesByAddress[attribute.sourceAddress].attributes[attribute.clusterId] });
                                         break;
                                 }
+                                if (devicesByAddress[attribute.sourceAddress].registered)
+                                    c.$proxy().pushStatus({ device: devicesByAddress[attribute.sourceAddress].name + '.' + Cluster[attribute.clusterId], state: devicesByAddress[attribute.sourceAddress].attributes[attribute.clusterId] });
                                 log(devicesByAddress[attribute.sourceAddress].attributes);
                             }
                             catch (e)
@@ -421,9 +428,23 @@ akala.injectWithName(['$worker'], (worker: EventEmitter) =>
                     devices[msg.device.name] = devicesByAddress[msg.body.zdevice.address];
                     for (var cluster in devicesByAddress[msg.body.zdevice.address].attributes)
                     {
+                        let statusUnit: string;
+                        if (<number><any>cluster == Cluster.Basic) //Typescript bug
+                            continue;
+                        switch (<Cluster><any>cluster)
+                        {
+                            case Cluster.Temperature:
+                                statusUnit = '°C';
+                            case Cluster.Pressure:
+                                statusUnit = 'b';
+                            case Cluster.Humidity:
+                                statusUnit = '%';
+                        }
+
                         msg.device.subdevices.push({
                             name: Cluster[cluster],
                             commands: [],
+                            statusUnit: statusUnit,
                             category: msg.device.category,
                             type: msg.device.type,
                             status: function ()
@@ -431,7 +452,7 @@ akala.injectWithName(['$worker'], (worker: EventEmitter) =>
                                 return Promise.resolve(devicesByAddress[msg.body.zdevice.address].attributes[cluster].toString());
                             },
                             statusMethod: 'push'
-                        })
+                        });
                     }
                 }
 
