@@ -345,7 +345,33 @@ akala.injectWithName(['$worker'], (worker: EventEmitter) =>
                                 }
 
                             if (devicesByAddress[attribute.sourceAddress].clusters.indexOf(attribute.clusterId) == -1)
+                            {
                                 devicesByAddress[attribute.sourceAddress].clusters.push(attribute.clusterId);
+                                if (devicesByAddress[attribute.sourceAddress].registered && attribute.clusterId != Cluster.Basic)
+                                {
+                                    let statusUnit: string;
+
+                                    switch (<Cluster><any>cluster)
+                                    {
+                                        case Cluster.Temperature:
+                                            statusUnit = '°C';
+                                        case Cluster.Pressure:
+                                            statusUnit = 'b';
+                                        case Cluster.Humidity:
+                                            statusUnit = '%';
+                                    }
+
+                                    c.$proxy().save({
+                                        device: {
+                                            type: 'zigate',
+                                            name: devicesByAddress[attribute.sourceAddress] + '.' + Cluster[attribute.clusterId],
+                                            statusMethod: 'push',
+                                            commands: [],
+                                            statusUnit: statusUnit
+                                        }, body: null
+                                    })
+                                }
+                            }
                             try
                             {
                                 if (attribute.clusterId == 0 && attribute.attributeEnum != 0)
@@ -424,6 +450,44 @@ akala.injectWithName(['$worker'], (worker: EventEmitter) =>
                 else //ZDevice
                 {
                     msg.device.subdevices = [];
+                    if (!(msg.body.zdevice.address in devicesByAddress))
+                    {
+                        return gateway.then((zigate) =>
+                        {
+                            devicesByAddress[msg.body.zdevice.address] = { name: msg.device.name, registered: true, type: 'device', address: msg.body.zdevice.address, gateway: zigate, clusters: [], attributes: {} };
+                            devices[msg.device.name] = devicesByAddress[msg.body.zdevice.address];
+                            for (var cluster in devicesByAddress[msg.body.zdevice.address].attributes)
+                            {
+                                let statusUnit: string;
+                                if (<number><any>cluster == Cluster.Basic) //Typescript bug
+                                    continue;
+                                switch (<Cluster><any>cluster)
+                                {
+                                    case Cluster.Temperature:
+                                        statusUnit = '°C';
+                                    case Cluster.Pressure:
+                                        statusUnit = 'b';
+                                    case Cluster.Humidity:
+                                        statusUnit = '%';
+                                }
+
+                                msg.device.subdevices.push({
+                                    name: Cluster[cluster],
+                                    commands: [],
+                                    statusUnit: statusUnit,
+                                    category: msg.device.category,
+                                    type: msg.device.type,
+                                    status: function ()
+                                    {
+                                        return Promise.resolve(devicesByAddress[msg.body.zdevice.address].attributes[cluster].toString());
+                                    },
+                                    statusMethod: 'push'
+                                });
+                            }
+
+                            return msg.device;
+                        });
+                    }
                     devicesByAddress[msg.body.zdevice.address].name = msg.device.name;
                     devices[msg.device.name] = devicesByAddress[msg.body.zdevice.address];
                     for (var cluster in devicesByAddress[msg.body.zdevice.address].attributes)
