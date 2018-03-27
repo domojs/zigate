@@ -330,10 +330,17 @@ akala.injectWithName(['$worker'], (worker: EventEmitter) =>
 
                         zigate.on<MessageTypes.ReportIndividualAttribute>(MessageType.ReportIndividualAttribute, (attribute) =>
                         {
-                            if (attribute.attributeEnum == 0x01)
+
+                            if (attribute.clusterId == Cluster.Basic && attribute.attributeEnum == 0x05)
                             {
                                 devicesByAddress[attribute.sourceAddress].internalName = attribute.value.toString();
                             }
+
+                            if (attribute.clusterId == 0 && attribute.attributeEnum != 0)
+                            {
+                                attribute.clusterId = attribute.attributeEnum;
+                            }
+
                             if (!(attribute.sourceAddress in devicesByAddress))
                                 devicesByAddress[attribute.sourceAddress] = {
                                     type: 'device',
@@ -368,7 +375,7 @@ akala.injectWithName(['$worker'], (worker: EventEmitter) =>
                                             statusMethod: 'push',
                                             commands: [],
                                             statusUnit: statusUnit
-                                        }, body: null
+                                        }, body: {}
                                     })
                                 }
                             }
@@ -454,7 +461,6 @@ akala.injectWithName(['$worker'], (worker: EventEmitter) =>
                     {
                         return gateway.then((zigate) =>
                         {
-                            devicesByAddress[msg.body.zdevice.address] = { name: msg.device.name, registered: true, type: 'device', address: msg.body.zdevice.address, gateway: zigate, clusters: [], attributes: {} };
                             devices[msg.device.name] = devicesByAddress[msg.body.zdevice.address];
                             for (var cluster in devicesByAddress[msg.body.zdevice.address].attributes)
                             {
