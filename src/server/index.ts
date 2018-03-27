@@ -371,6 +371,7 @@ akala.injectWithName(['$worker'], (worker: EventEmitter) =>
                                     c.$proxy().save({
                                         device: {
                                             type: 'zigate',
+                                            category: devicesByAddress[attribute.sourceAddress].category,
                                             name: devicesByAddress[attribute.sourceAddress] + '.' + Cluster[attribute.clusterId],
                                             statusMethod: 'push',
                                             commands: [],
