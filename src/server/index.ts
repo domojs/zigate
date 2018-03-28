@@ -368,7 +368,7 @@ akala.injectWithName(['$worker'], (worker: EventEmitter) =>
                                             statusUnit = '%';
                                     }
 
-                                    c.$proxy().save({
+                                    server.save({
                                         device: {
                                             type: 'zigate',
                                             category: devicesByAddress[attribute.sourceAddress].category,
@@ -376,7 +376,12 @@ akala.injectWithName(['$worker'], (worker: EventEmitter) =>
                                             statusMethod: 'push',
                                             commands: [],
                                             statusUnit: statusUnit
-                                        }, body: {}
+                                        }, body:
+                                            {
+                                                name: devicesByAddress[attribute.sourceAddress].name,
+                                                category: devicesByAddress[attribute.sourceAddress].category,
+                                                zdevice: { address: attribute.sourceAddress }
+                                            }
                                     })
                                 }
                             }
@@ -462,13 +467,24 @@ akala.injectWithName(['$worker'], (worker: EventEmitter) =>
                     {
                         return gateway.then((zigate) =>
                         {
-                            devices[msg.device.name] = devicesByAddress[msg.body.zdevice.address];
-                            for (var cluster in devicesByAddress[msg.body.zdevice.address].attributes)
+                            if (msg.body.zdevice.address in devicesByAddress && devicesByAddress[msg.body.zdevice.address].registered)
+                                return msg.device;
+                                
+                            devices[msg.device.name] = devicesByAddress[msg.body.zdevice.address] = {
+                                type: 'device',
+                                address: msg.body.zdevice.address,
+                                name: msg.device.name,
+                                attributes: {},
+                                clusters: [],
+                                gateway: zigate,
+                                registered: true
+                            };
+                            for (var cluster of devicesByAddress[msg.body.zdevice.address].clusters)
                             {
                                 let statusUnit: string;
-                                if (<number><any>cluster == Cluster.Basic) //Typescript bug
+                                if (cluster == Cluster.Basic) //Typescript bug
                                     continue;
-                                switch (<Cluster><any>cluster)
+                                switch (cluster)
                                 {
                                     case Cluster.Temperature:
                                         statusUnit = '°C';
