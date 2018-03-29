@@ -372,7 +372,7 @@ akala.injectWithName(['$worker'], (worker: EventEmitter) =>
                                         device: {
                                             type: 'zigate',
                                             category: devicesByAddress[attribute.sourceAddress].category,
-                                            name: devicesByAddress[attribute.sourceAddress] + '.' + Cluster[attribute.clusterId],
+                                            name: devicesByAddress[attribute.sourceAddress].name + '.' + Cluster[attribute.clusterId],
                                             statusMethod: 'push',
                                             commands: [],
                                             statusUnit: statusUnit
@@ -462,6 +462,8 @@ akala.injectWithName(['$worker'], (worker: EventEmitter) =>
                 }
                 else //ZDevice
                 {
+                    if (msg.device.name.indexOf('.') > 0)
+                        return msg.device;
                     msg.device.subdevices = [];
                     if (!(msg.body.zdevice.address in devicesByAddress))
                     {
@@ -469,10 +471,11 @@ akala.injectWithName(['$worker'], (worker: EventEmitter) =>
                         {
                             if (msg.body.zdevice.address in devicesByAddress && devicesByAddress[msg.body.zdevice.address].registered)
                                 return msg.device;
-                                
+
                             devices[msg.device.name] = devicesByAddress[msg.body.zdevice.address] = {
                                 type: 'device',
                                 address: msg.body.zdevice.address,
+                                category: msg.device.category,
                                 name: msg.device.name,
                                 attributes: {},
                                 clusters: [],
