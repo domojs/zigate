@@ -282,7 +282,7 @@ akala.injectWithName(['$worker'], (worker: EventEmitter) =>
                         return null;
                 }
             },
-            save: function (msg)
+            save: async function (msg)
             {
                 if (Object.keys(devices).length == 0 && !msg.body.IP && !msg.body.port)
                     throw new Error('A gateway first need to be registered');
@@ -294,171 +294,172 @@ akala.injectWithName(['$worker'], (worker: EventEmitter) =>
                     else
                         throw new Error('Wifi zigate are not (yet) supported');
 
-                    return gateway.then((zigate) =>
+                    var zigate = await gateway;
+                    msg.device.commands = {
+                        'GetVersion': { type: 'button' },
+                        'Reset': { type: 'button' },
+                        'ErasePersistentData': { type: 'button' },
+                        'ZLO_ZLL_FactoryNew_Reset': { type: 'button' },
+                        'PermitJoin': { type: 'button' },
+                        'GetDevicesList': { type: 'button' },
+                        'SetSecurityStateAndKey': { type: 'button' },
+                        'StartNetworkScan': { type: 'button' },
+                        'RemoveDevice': { type: 'button' },
+                        'EnablePermissionsControlJoin': { type: 'button' },
+                        'AuthenticateDevice': { type: 'button' },
+                        'Bind': { type: 'button' },
+                        'Unbind': { type: 'button' },
+                        'ManagementLeave': { type: 'button' },
+                        'PermitJoining': { type: 'button' },
+                    };
+
+                    zigate.send<MessageTypes.SetChannelMaskRequest>(MessageType.SetChannelMask, { mask: 11 })
+                    zigate.once(MessageType.Status, (response: MessageTypes.SetChannelMaskResponse) =>
                     {
-                        msg.device.commands = {
-                            'GetVersion': { type: 'button' },
-                            'Reset': { type: 'button' },
-                            'ErasePersistentData': { type: 'button' },
-                            'ZLO_ZLL_FactoryNew_Reset': { type: 'button' },
-                            'PermitJoin': { type: 'button' },
-                            'GetDevicesList': { type: 'button' },
-                            'SetSecurityStateAndKey': { type: 'button' },
-                            'StartNetworkScan': { type: 'button' },
-                            'RemoveDevice': { type: 'button' },
-                            'EnablePermissionsControlJoin': { type: 'button' },
-                            'AuthenticateDevice': { type: 'button' },
-                            'Bind': { type: 'button' },
-                            'Unbind': { type: 'button' },
-                            'ManagementLeave': { type: 'button' },
-                            'PermitJoining': { type: 'button' },
-                        };
-
-                        zigate.send<MessageTypes.SetChannelMaskRequest>(MessageType.SetChannelMask, { mask: 11 })
-                        zigate.once(MessageType.Status, (response: MessageTypes.SetChannelMaskResponse) =>
+                        zigate.send<MessageTypes.SetDeviceTypeRequest>(MessageType.SetDeviceType, { type: DeviceType.Coordinator });
+                        zigate.once(MessageType.Status, (response: MessageTypes.SetDeviceTypeResponse) =>
                         {
-                            zigate.send<MessageTypes.SetDeviceTypeRequest>(MessageType.SetDeviceType, { type: DeviceType.Coordinator });
-                            zigate.once(MessageType.Status, (response: MessageTypes.SetDeviceTypeResponse) =>
+                            zigate.send<MessageTypes.StartNetworkRequest>(MessageType.StartNetwork);
+                            zigate.once(MessageType.StartNetwork, (response: MessageTypes.StartNetworkResponse) =>
                             {
-                                zigate.send<MessageTypes.StartNetworkRequest>(MessageType.StartNetwork);
-                                zigate.once(MessageType.StartNetwork, (response: MessageTypes.StartNetworkResponse) =>
-                                {
 
-                                })
                             })
-                        });
+                        })
+                    });
 
-                        zigate.on<MessageTypes.ReportIndividualAttribute>(MessageType.ReportIndividualAttribute, (attribute) =>
+                    zigate.on<MessageTypes.ReportIndividualAttribute>(MessageType.ReportIndividualAttribute, async (attribute) =>
+                    {
+
+                        if (attribute.clusterId == Cluster.Basic && attribute.attributeEnum == 0x05)
                         {
+                            devicesByAddress[attribute.sourceAddress].internalName = attribute.value.toString();
+                        }
 
-                            if (attribute.clusterId == Cluster.Basic && attribute.attributeEnum == 0x05)
-                            {
-                                devicesByAddress[attribute.sourceAddress].internalName = attribute.value.toString();
+                        if (attribute.clusterId == 0 && attribute.attributeEnum != 0)
+                        {
+                            attribute.clusterId = attribute.attributeEnum;
+                        }
+
+                        if (!(attribute.sourceAddress in devicesByAddress))
+                            devicesByAddress[attribute.sourceAddress] = {
+                                type: 'device',
+                                gateway: zigate,
+                                address: attribute.sourceAddress,
+                                category: null,
+                                clusters: [],
+                                attributes: {}
                             }
 
+                        if (devicesByAddress[attribute.sourceAddress].clusters.indexOf(attribute.clusterId) == -1)
+                        {
+                            devicesByAddress[attribute.sourceAddress].clusters.push(attribute.clusterId);
+                            if (devicesByAddress[attribute.sourceAddress].registered && attribute.clusterId != Cluster.Basic && attribute.clusterId != Cluster.XiaomiPrivate1)
+                            {
+                                let statusUnit: string;
+
+                                switch (attribute.clusterId)
+                                {
+                                    case Cluster.Temperature:
+                                        statusUnit = '°C';
+                                        break;
+                                    case Cluster.Pressure:
+                                        statusUnit = 'b';
+                                        break;
+                                    case Cluster.Humidity:
+                                        statusUnit = '%';
+                                        break;
+                                }
+
+                                await server.save({
+                                    device: {
+                                        type: 'zigate',
+                                        category: devicesByAddress[attribute.sourceAddress].category,
+                                        name: devicesByAddress[attribute.sourceAddress].name + '.' + Cluster[attribute.clusterId],
+                                        statusMethod: 'push',
+                                        commands: [],
+                                        statusUnit: statusUnit
+                                    }, body:
+                                        {
+                                            name: devicesByAddress[attribute.sourceAddress].name,
+                                            category: devicesByAddress[attribute.sourceAddress].category,
+                                            zdevice: { address: attribute.sourceAddress }
+                                        }
+                                })
+                            }
+                        }
+                        try
+                        {
                             if (attribute.clusterId == 0 && attribute.attributeEnum != 0)
                             {
                                 attribute.clusterId = attribute.attributeEnum;
                             }
 
-                            if (!(attribute.sourceAddress in devicesByAddress))
-                                devicesByAddress[attribute.sourceAddress] = {
-                                    type: 'device',
-                                    gateway: zigate,
-                                    address: attribute.sourceAddress,
-                                    category: null,
-                                    clusters: [],
-                                    attributes: {}
-                                }
-
-                            if (devicesByAddress[attribute.sourceAddress].clusters.indexOf(attribute.clusterId) == -1)
+                            switch (attribute.dataType)
                             {
-                                devicesByAddress[attribute.sourceAddress].clusters.push(attribute.clusterId);
-                                if (devicesByAddress[attribute.sourceAddress].registered && attribute.clusterId != Cluster.Basic)
-                                {
-                                    let statusUnit: string;
-
-                                    switch (<Cluster><any>cluster)
-                                    {
-                                        case Cluster.Temperature:
-                                            statusUnit = '°C';
-                                        case Cluster.Pressure:
-                                            statusUnit = 'b';
-                                        case Cluster.Humidity:
-                                            statusUnit = '%';
-                                    }
-
-                                    server.save({
-                                        device: {
-                                            type: 'zigate',
-                                            category: devicesByAddress[attribute.sourceAddress].category,
-                                            name: devicesByAddress[attribute.sourceAddress].name + '.' + Cluster[attribute.clusterId],
-                                            statusMethod: 'push',
-                                            commands: [],
-                                            statusUnit: statusUnit
-                                        }, body:
-                                            {
-                                                name: devicesByAddress[attribute.sourceAddress].name,
-                                                category: devicesByAddress[attribute.sourceAddress].category,
-                                                zdevice: { address: attribute.sourceAddress }
-                                            }
-                                    })
-                                }
+                                case AttributeType.bitmap:
+                                    break;
+                                case AttributeType.bool:
+                                    devicesByAddress[attribute.sourceAddress].attributes[attribute.clusterId] = attribute.value.readUInt8(0);
+                                    break;
+                                case AttributeType.enum:
+                                    devicesByAddress[attribute.sourceAddress].attributes[attribute.clusterId] = attribute.value.readUInt8(0);
+                                    break;
+                                case AttributeType.int16:
+                                    devicesByAddress[attribute.sourceAddress].attributes[attribute.clusterId] = attribute.value.readInt16BE(0);
+                                    break;
+                                case AttributeType.int32:
+                                    devicesByAddress[attribute.sourceAddress].attributes[attribute.clusterId] = attribute.value.readInt32BE(0);
+                                    break;
+                                case AttributeType.int8:
+                                    devicesByAddress[attribute.sourceAddress].attributes[attribute.clusterId] = attribute.value.readInt8(0);
+                                    break;
+                                case AttributeType.null:
+                                    devicesByAddress[attribute.sourceAddress].attributes[attribute.clusterId] = null;
+                                    break;
+                                case AttributeType.string:
+                                    devicesByAddress[attribute.sourceAddress].attributes[attribute.clusterId] = attribute.value.toString();
+                                    break;
+                                case AttributeType.uint16:
+                                    devicesByAddress[attribute.sourceAddress].attributes[attribute.clusterId] = attribute.value.readUInt16BE(0);
+                                    break;
+                                case AttributeType.uint32:
+                                    devicesByAddress[attribute.sourceAddress].attributes[attribute.clusterId] = attribute.value.readUInt32BE(0);
+                                    break;
+                                case AttributeType.uint48:
+                                    devicesByAddress[attribute.sourceAddress].attributes[attribute.clusterId] = attribute.value.readUIntBE(0, 6);
+                                    break;
+                                case AttributeType.uint8:
+                                    devicesByAddress[attribute.sourceAddress].attributes[attribute.clusterId] = attribute.value.readUInt8(0);
+                                    break;
+                                default:
+                                    throw new Error(`Unsupported attribute type (${attribute.dataType})`);
                             }
-                            try
+                            switch (attribute.clusterId)
                             {
-                                if (attribute.clusterId == 0 && attribute.attributeEnum != 0)
-                                {
-                                    attribute.clusterId = attribute.attributeEnum;
-                                }
-
-                                switch (attribute.dataType)
-                                {
-                                    case AttributeType.bitmap:
-                                        break;
-                                    case AttributeType.bool:
-                                        devicesByAddress[attribute.sourceAddress].attributes[attribute.clusterId] = attribute.value.readUInt8(0);
-                                        break;
-                                    case AttributeType.enum:
-                                        devicesByAddress[attribute.sourceAddress].attributes[attribute.clusterId] = attribute.value.readUInt8(0);
-                                        break;
-                                    case AttributeType.int16:
-                                        devicesByAddress[attribute.sourceAddress].attributes[attribute.clusterId] = attribute.value.readInt16BE(0);
-                                        break;
-                                    case AttributeType.int32:
-                                        devicesByAddress[attribute.sourceAddress].attributes[attribute.clusterId] = attribute.value.readInt32BE(0);
-                                        break;
-                                    case AttributeType.int8:
-                                        devicesByAddress[attribute.sourceAddress].attributes[attribute.clusterId] = attribute.value.readInt8(0);
-                                        break;
-                                    case AttributeType.null:
-                                        devicesByAddress[attribute.sourceAddress].attributes[attribute.clusterId] = null;
-                                        break;
-                                    case AttributeType.string:
-                                        devicesByAddress[attribute.sourceAddress].attributes[attribute.clusterId] = attribute.value.toString();
-                                        break;
-                                    case AttributeType.uint16:
-                                        devicesByAddress[attribute.sourceAddress].attributes[attribute.clusterId] = attribute.value.readUInt16BE(0);
-                                        break;
-                                    case AttributeType.uint32:
-                                        devicesByAddress[attribute.sourceAddress].attributes[attribute.clusterId] = attribute.value.readUInt32BE(0);
-                                        break;
-                                    case AttributeType.uint48:
-                                        devicesByAddress[attribute.sourceAddress].attributes[attribute.clusterId] = attribute.value.readUIntBE(0, 6);
-                                        break;
-                                    case AttributeType.uint8:
-                                        devicesByAddress[attribute.sourceAddress].attributes[attribute.clusterId] = attribute.value.readUInt8(0);
-                                        break;
-                                    default:
-                                        throw new Error(`Unsupported attribute type (${attribute.dataType})`);
-                                }
-                                switch (attribute.clusterId)
-                                {
-                                    case Cluster.Pressure:
-                                        devicesByAddress[attribute.sourceAddress].attributes[attribute.clusterId] = (devicesByAddress[attribute.sourceAddress].attributes[attribute.clusterId] as number) / 10000;
-                                        break;
-                                    case Cluster.Temperature:
-                                    case Cluster.Humidity:
-                                        devicesByAddress[attribute.sourceAddress].attributes[attribute.clusterId] = (devicesByAddress[attribute.sourceAddress].attributes[attribute.clusterId] as number) / 100;
-                                        break;
-                                }
-                                if (devicesByAddress[attribute.sourceAddress].registered)
-                                    c.$proxy().pushStatus({ device: devicesByAddress[attribute.sourceAddress].name + '.' + Cluster[attribute.clusterId], state: devicesByAddress[attribute.sourceAddress].attributes[attribute.clusterId] });
-                                log(devicesByAddress[attribute.sourceAddress].attributes);
+                                case Cluster.Pressure:
+                                    devicesByAddress[attribute.sourceAddress].attributes[attribute.clusterId] = (devicesByAddress[attribute.sourceAddress].attributes[attribute.clusterId] as number) / 10000;
+                                    break;
+                                case Cluster.Temperature:
+                                case Cluster.Humidity:
+                                    devicesByAddress[attribute.sourceAddress].attributes[attribute.clusterId] = (devicesByAddress[attribute.sourceAddress].attributes[attribute.clusterId] as number) / 100;
+                                    break;
                             }
-                            catch (e)
-                            {
-                                log(e);
-                            }
-                        })
+                            if (devicesByAddress[attribute.sourceAddress].registered)
+                                await server.pushStatus({ device: devicesByAddress[attribute.sourceAddress].name + '.' + Cluster[attribute.clusterId], state: devicesByAddress[attribute.sourceAddress].attributes[attribute.clusterId] });
+                            log(devicesByAddress[attribute.sourceAddress].attributes);
+                        }
+                        catch (e)
+                        {
+                            log(e);
+                        }
+                    })
 
-                        devices[msg.device.name] = {
-                            type: 'gateway',
-                            gateway: zigate
-                        };
+                    devices[msg.device.name] = {
+                        type: 'gateway',
+                        gateway: zigate
+                    };
 
-                        return msg.device;
-                    });
+                    return msg.device;
                 }
                 else //ZDevice
                 {
@@ -467,61 +468,60 @@ akala.injectWithName(['$worker'], (worker: EventEmitter) =>
                     msg.device.subdevices = [];
                     if (!(msg.body.zdevice.address in devicesByAddress))
                     {
-                        return gateway.then((zigate) =>
+                        var zigate = await gateway;
+                        if (msg.body.zdevice.address in devicesByAddress && devicesByAddress[msg.body.zdevice.address].registered)
+                            return msg.device;
+
+                        devices[msg.device.name] = devicesByAddress[msg.body.zdevice.address] = {
+                            type: 'device',
+                            address: msg.body.zdevice.address,
+                            category: msg.device.category,
+                            name: msg.device.name,
+                            attributes: {},
+                            clusters: [],
+                            gateway: zigate,
+                            registered: true
+                        };
+                        for (let cluster of devicesByAddress[msg.body.zdevice.address].clusters)
                         {
-                            if (msg.body.zdevice.address in devicesByAddress && devicesByAddress[msg.body.zdevice.address].registered)
-                                return msg.device;
-
-                            devices[msg.device.name] = devicesByAddress[msg.body.zdevice.address] = {
-                                type: 'device',
-                                address: msg.body.zdevice.address,
-                                category: msg.device.category,
-                                name: msg.device.name,
-                                attributes: {},
-                                clusters: [],
-                                gateway: zigate,
-                                registered: true
-                            };
-                            for (var cluster of devicesByAddress[msg.body.zdevice.address].clusters)
+                            console.log('useless ?');
+                            let statusUnit: string;
+                            if (cluster == Cluster.Basic) //Typescript bug
+                                continue;
+                            switch (cluster)
                             {
-                                let statusUnit: string;
-                                if (cluster == Cluster.Basic) //Typescript bug
-                                    continue;
-                                switch (cluster)
-                                {
-                                    case Cluster.Temperature:
-                                        statusUnit = '°C';
-                                    case Cluster.Pressure:
-                                        statusUnit = 'b';
-                                    case Cluster.Humidity:
-                                        statusUnit = '%';
-                                }
-
-                                msg.device.subdevices.push({
-                                    name: Cluster[cluster],
-                                    commands: [],
-                                    statusUnit: statusUnit,
-                                    category: msg.device.category,
-                                    type: msg.device.type,
-                                    status: function ()
-                                    {
-                                        return Promise.resolve(devicesByAddress[msg.body.zdevice.address].attributes[cluster].toString());
-                                    },
-                                    statusMethod: 'push'
-                                });
+                                case Cluster.Temperature:
+                                    statusUnit = '°C';
+                                case Cluster.Pressure:
+                                    statusUnit = 'b';
+                                case Cluster.Humidity:
+                                    statusUnit = '%';
                             }
 
-                            return msg.device;
-                        });
+                            msg.device.subdevices.push({
+                                name: Cluster[cluster],
+                                commands: [],
+                                statusUnit: statusUnit,
+                                category: msg.device.category,
+                                type: msg.device.type,
+                                status: function ()
+                                {
+                                    return Promise.resolve(devicesByAddress[msg.body.zdevice.address].attributes[cluster].toString());
+                                },
+                                statusMethod: 'push'
+                            });
+                        }
+
+                        return msg.device;
                     }
                     devicesByAddress[msg.body.zdevice.address].name = msg.device.name;
                     devices[msg.device.name] = devicesByAddress[msg.body.zdevice.address];
-                    for (var cluster in devicesByAddress[msg.body.zdevice.address].attributes)
+                    for (let cluster of devicesByAddress[msg.body.zdevice.address].clusters)
                     {
                         let statusUnit: string;
-                        if (<number><any>cluster == Cluster.Basic) //Typescript bug
+                        if (cluster == Cluster.Basic)
                             continue;
-                        switch (<Cluster><any>cluster)
+                        switch (cluster)
                         {
                             case Cluster.Temperature:
                                 statusUnit = '°C';
