@@ -437,7 +437,7 @@ akala.injectWithName(['$worker'], (worker: EventEmitter) =>
                             switch (attribute.clusterId)
                             {
                                 case Cluster.Pressure:
-                                    devicesByAddress[attribute.sourceAddress].attributes[attribute.clusterId] = (devicesByAddress[attribute.sourceAddress].attributes[attribute.clusterId] as number) / 10000;
+                                    devicesByAddress[attribute.sourceAddress].attributes[attribute.clusterId] = (devicesByAddress[attribute.sourceAddress].attributes[attribute.clusterId] as number) / 1000;
                                     break;
                                 case Cluster.Temperature:
                                 case Cluster.Humidity:
