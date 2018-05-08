@@ -51,7 +51,7 @@ akala.injectWithName(['$worker'], (worker: EventEmitter) =>
 
     akala.worker.createClient('devices').then((client) =>
     {
-        var c = deviceType.createClient(client)({
+        var c = akala.api.jsonrpcws(deviceType).createClient(client)({
             exec: function (msg: { device: string, command: string, value?: any })
             {
                 log(msg);
