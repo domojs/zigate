@@ -13,8 +13,8 @@
   "author": "npenin",
   "license": "MIT",
   "dependencies": {
-    "@akala/server": "^2.0.1-1",
-    "serialport": "^6.0.5",
+    "@akala/server": "^2.0.5",
+    "serialport": "^6.2.0",
     "zigate": "^1.0.0"
   },
   "devDependencies": {
