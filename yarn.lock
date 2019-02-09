@@ -76,10 +76,10 @@
     ws "^6.1.2"
     xml2js "^0.4.19"
 
-"@domojs/devices@^1.2.6":
-  version "1.2.6"
-  resolved "https://registry.yarnpkg.com/@domojs/devices/-/devices-1.2.6.tgz#b686c5aca4a3390d4dbeda9e924794e722f32ca7"
-  integrity sha512-KWqppF8d59b24BBGmDCaoOWnZ0xWZsafCRHCNH5E+S8j/N4TMQAS7DlasGBUGYCojTeKUwGKv+Y7Whiiww98ZA==
+"@domojs/devices@^1.2.7":
+  version "1.2.7"
+  resolved "https://registry.yarnpkg.com/@domojs/devices/-/devices-1.2.7.tgz#cb3a2f729db3bd59911a84814e1a77b0455f1dd4"
+  integrity sha512-uov82SDtTy6AmSQSqholjGsZKRHfSoTyslQMCtNMsZ700hd/6lwbwioOqGzfhbwbMy1NxtE7ubYolQcB7xDJmg==
   dependencies:
     "@akala-modules/core" "^1.1.0-0"
     "@akala/client" "^2.0.0-3"
@@ -214,6 +214,11 @@
   version "0.0.30"
   resolved "https://registry.yarnpkg.com/@types/debug/-/debug-0.0.30.tgz#dc1e40f7af3b9c815013a7860e6252f6352a84df"
   integrity sha512-orGL5LXERPYsLov6CWs3Fh6203+dXzJkR7OnddIr2514Hsecwc8xRpzCapshBbKFImCsvS/mk6+FWiN5LyZJAQ==
+
+"@types/debug@^4.1.0":
+  version "4.1.0"
+  resolved "https://registry.yarnpkg.com/@types/debug/-/debug-4.1.0.tgz#f47877eca7cb38bbc94e716c044919bb54075828"
+  integrity sha512-QEYGliFbMQmDLZAcXJS+AbMDtnH0HjvgiALFbWPHsVn9dD75No+/MGEfpLCsAOWKg8WjtQxwfaPbRiq25XLYDw==
 
 "@types/events@*":
   version "3.0.0"
