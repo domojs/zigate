@@ -143,9 +143,9 @@
     uuid "^8.0.0"
 
 "@domojs/devices@^1.2.7":
-  version "1.4.31"
-  resolved "https://registry.yarnpkg.com/@domojs/devices/-/devices-1.4.31.tgz#68c0969fca579893c7f78792ec3dd792147fea18"
-  integrity sha512-MlSxlO7bNsiviCm6VQjO3rOynSyFB6hG8JDFcWFG76dG4tkd4TWvkH6XHm2e5DQDk4QPIo8l3DF9TB1P4z+s/Q==
+  version "1.4.35"
+  resolved "https://registry.yarnpkg.com/@domojs/devices/-/devices-1.4.35.tgz#b9f8453bc8bbb72aa3b7d18ea0fbac34bb8b2c68"
+  integrity sha512-CWV5AVMa1P0V41BjiUN4WtuNa+8qJzBUsLx4w1VMTqudToiHV3L5OrLuVQI5tUjceoyRphgm3b3C6X/qnZvrWw==
   dependencies:
     "@akala/client" "^2.1.63"
     "@akala/commands" "^0.6.53"
