@@ -18,7 +18,7 @@
   "license": "MIT",
   "dependencies": {
     "@akala/server": "^2.1.11",
-    "serialport": "^7.1.4",
+    "serialport": "^9.0.4",
     "zigate": "^1.0.0"
   },
   "devDependencies": {
